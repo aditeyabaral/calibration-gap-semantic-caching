@@ -27,10 +27,10 @@ from pylate.hf_hub.model_card import PylateModelCardData
 from pylate.utils import ColBERTCollator
 
 from src.reranker.util import (
-    load_semcache_sentencepairs_splits,
+    load_langcache_sentencepairs_splits,
     to_infonce,
 )
-from cache_evaluator import CacheEvaluator
+from src.reranker.cache_evaluator import CacheEvaluator
 
 
 if __name__ == "__main__":
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--finetuned-model-path",
         type=str,
-        default="semcache-colbert-v2",
+        default="redis/langcache-colbert-v2",
         help="Path to the finetuned ColBERT model.",
     )
     # TODO: Check what happens if we do not set these lengths, does it auto initialise to defaults?
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         "--dataset-version",
         type=str,
         default="v3",
-        help="Version of the SemCache Sentence Pairs dataset to use.",
+        help="Version of the LangCache Sentence Pairs dataset to use.",
     )
     parser.add_argument(
         "--train-dataset-subsets",
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="/opt/dlami/nvme/semcache-colbert-models",
+        default="/opt/dlami/nvme/langcache-colbert-models",
         help="Directory to save checkpoints and final model. "
         "A subdirectory will be created for the weights and metrics.",
     )
@@ -207,9 +207,9 @@ if __name__ == "__main__":
     os.makedirs(save_dir, exist_ok=True)
 
     # load train and val datasets
-    train_dataset, val_dataset, test_dataset = load_semcache_sentencepairs_splits(
+    train_dataset, val_dataset, test_dataset = load_langcache_sentencepairs_splits(
         subset_names={
-            f"anon-org/semcache-sentencepairs-{args.dataset_version}": args.train_dataset_subsets
+            f"redis/langcache-sentencepairs-{args.dataset_version}": args.train_dataset_subsets
         },
         combine_train_and_val=args.combine_train_and_val,
     )
@@ -239,14 +239,14 @@ if __name__ == "__main__":
 
     train_dataset_entries = [
         {
-            "name": f"SemCache Sentence Pairs (subsets={args.train_dataset_subsets}, train+val={args.combine_train_and_val})",
-            "id": f"anon-org/semcache-sentencepairs-{args.dataset_version}",
+            "name": f"LangCache Sentence Pairs (subsets={args.train_dataset_subsets}, train+val={args.combine_train_and_val})",
+            "id": f"redis/langcache-sentencepairs-{args.dataset_version}",
         }
     ]
     eval_dataset_entries = [
         {
-            "name": f"SemCache Sentence Pairs (split={args.eval_split})",
-            "id": f"anon-org/semcache-sentencepairs-{args.dataset_version}",
+            "name": f"LangCache Sentence Pairs (split={args.eval_split})",
+            "id": f"redis/langcache-sentencepairs-{args.dataset_version}",
         }
     ]
 
