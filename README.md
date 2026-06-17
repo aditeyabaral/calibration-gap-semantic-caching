@@ -1,4 +1,4 @@
-# Semantic Cache Re-ranking Evaluation
+# Closing the Calibration Gap in Semantic Caching
 
 Official code for the paper 📄 **"Closing the Calibration Gap in Semantic Caching."** [[arXiv]](https://arxiv.org/abs/XXXX.XXXXX)
 
