@@ -1,0 +1,17 @@
+.venv/
+.vscode/
+.claude/
+__pycache__/
+__pycharm__/
+.idea/
+.ruff_cache/
+logs/
+results/
+wandb/
+paper/
+
+*.json
+*.png
+*.txt
+*.sif
+*.pdf
