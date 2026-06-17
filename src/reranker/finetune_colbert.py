@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--finetuned-model-path",
         type=str,
-        default="langcache-colbert-v2",
+        default="redis/langcache-colbert-v2",
         help="Path to the finetuned ColBERT model.",
     )
     # TODO: Check what happens if we do not set these lengths, does it auto initialise to defaults?

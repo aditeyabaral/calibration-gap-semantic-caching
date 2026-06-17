@@ -29,17 +29,9 @@ To reproduce the results in the paper, follow the steps in order: **Setup → Da
 │   │   ├── create_sentencepairs_v1.py  # Dataset curation: v1 (~1M train pairs)
 │   │   ├── create_sentencepairs_v2.py  # Dataset curation: v2 (~8M train pairs)
 │   │   └── create_sentencepairs_v3.py  # Dataset curation: v3 (~40M train pairs)
-│   ├── shell/
-│   │   ├── run_reranker_evals.sh               # Run all retriever–reranker eval combinations
-│   │   └── run_reranker_evals_for_retriever.sh # Run all rerankers for one retriever
-│   └── slurm/
-│       ├── compute_calibration.slurm
-│       ├── finetune_colbert.slurm
-│       ├── run_cls_analysis.slurm
-│       ├── run_distribution_analysis.slurm
-│       ├── run_latency_analysis.slurm
-│       ├── run_reranker_evals.slurm
-│       └── run_reranker_evals_array.slurm
+│   └── shell/
+│       ├── run_reranker_evals.sh               # Run all retriever–reranker eval combinations
+│       └── run_reranker_evals_for_retriever.sh # Run all rerankers for one retriever
 ├── results/                            # Evaluation result JSON files (populated by eval_reranker.py)
 ├── plots/
 │   ├── classification/                 # PR / P-CHR curve plots (populated by analyze_cls.py)
@@ -159,7 +151,7 @@ python src/reranker/finetune_crossencoder.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--pretrained-model-path` | `Alibaba-NLP/gte-reranker-modernbert-base` | Base cross-encoder model to fine-tune |
-| `--finetuned-model-path` | `langcache-reranker-v2` | Output model name / HuggingFace Hub ID |
+| `--finetuned-model-path` | `redis/langcache-reranker-v2` | Output model name / HuggingFace Hub ID |
 | `--dataset-version` | `v3` | SentencePairs version to train on (`v1`, `v2`, `v3`) |
 | `--train-dataset-subsets` | `["all"]` | Subset names within the dataset version |
 | `--loss-function` | — | `bce`, `mnrl-sampled`, `mnrl-positive`, or `mse` (**required**) |
@@ -202,7 +194,7 @@ accelerate launch src/reranker/finetune_colbert.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--pretrained-model-path` | `lightonai/GTE-ModernColBERT-v1` | Base ColBERT model to fine-tune |
-| `--finetuned-model-path` | `langcache-colbert-v2` | Output model name / HuggingFace Hub ID |
+| `--finetuned-model-path` | `redis/langcache-colbert-v2` | Output model name / HuggingFace Hub ID |
 | `--query-length` | `512` | Maximum query token length |
 | `--document-length` | `512` | Maximum document token length |
 | `--dataset-version` | `v3` | SentencePairs version to train on (`v1`, `v2`, `v3`) |

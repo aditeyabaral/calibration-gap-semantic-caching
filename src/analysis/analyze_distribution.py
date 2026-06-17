@@ -341,7 +341,7 @@ if __name__ == "__main__":
             plot_distributions(
                 retriever_scores,
                 labels,
-                title=f"{retriever_name.replace('--', '/')} Retriever Score Distribution",
+                title=f"{retriever_name} Retriever Score Distribution",
                 output_path=os.path.join(
                     args.plots_dir, f"{retriever_name}_retriever_kde.png"
                 ),
@@ -380,7 +380,7 @@ if __name__ == "__main__":
                 plot_distributions(
                     reranker_scores,
                     labels,
-                    title=f"{retriever_name.replace('--', '/')} + {reranker_name.replace('--', '/')} Reranker Score Distribution",
+                    title=f"{retriever_name} + {reranker_name} Reranker Score Distribution",
                     output_path=os.path.join(
                         args.plots_dir,
                         f"{retriever_name}__{reranker_name}_reranker_kde.png",
