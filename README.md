@@ -1,15 +1,27 @@
-# Closing the Calibration Gap in Semantic Caching
+# Semantic Cache Re-ranking Evaluation
 
 Official code for the paper **"Closing the Calibration Gap in Semantic Caching."**
 
-Semantic caching cuts LLM inference costs by serving a cached response when a new query is *semantically* similar to a previously seen one. Whether a cache should fire is decided by a **score threshold**, yet semantic-cache re-rankers are almost always selected by **PR-AUC** — a metric that only measures how well scores *rank*, and says nothing about whether those scores are *usable at a fixed threshold*. This repository contains everything needed to reproduce our study of that mismatch: dataset curation, re-ranker fine-tuning, end-to-end retrieval + re-ranking evaluation against a live [Redis](https://redis.io/) semantic cache, and the cache-aware analysis that quantifies the **calibration gap**.
+If you use this code, the models, or the datasets, please cite:
+
+```bibtex
+@article{baral2026calibration,
+  title   = {Closing the Calibration Gap in Semantic Caching},
+  author  = {Baral, Aditeya and Ralev, Radoslav and Zhechev, Iliya Sotirov and Rajamohan, Srijith and Agarwal, Jen},
+  year    = {2026},
+  eprint  = {XXXX.XXXXX},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
+}
+```
+<!-- TODO: replace the arXiv eprint ID once available. -->
+
+Semantic caching cuts LLM inference costs by serving a cached response when a new query is *semantically* similar to a previously seen one. Whether a cache should fire is decided by a **score threshold**, yet semantic-cache retrievers and re-rankers are almost always selected by **PR-AUC** — a threshold-agnostic metric that says nothing about whether those scores are *usable at a fixed threshold*. This repository contains everything needed to reproduce our study of that mismatch: dataset curation, re-ranker fine-tuning, end-to-end retrieval + re-ranking evaluation against a live [Redis](https://redis.io/) semantic cache, and the cache-aware analysis that quantifies the **calibration gap**.
 
 > **Authors:** Aditeya Baral, Radoslav Ralev, Iliya Sotirov Zhechev, Srijith Rajamohan, Jen Agarwal &nbsp;·&nbsp; New York University · Redis
 >
 > 📄 **Paper:** *Closing the Calibration Gap in Semantic Caching* — [arXiv](https://arxiv.org/abs/XXXX.XXXXX) <!-- TODO: replace XXXX.XXXXX with the arXiv ID -->
 > 🤗 **Models & datasets:** [`redis` on Hugging Face](https://huggingface.co/redis)
-
----
 
 ## Table of Contents
 
@@ -24,14 +36,10 @@ Semantic caching cuts LLM inference costs by serving a cached response when a ne
   - [2. Training](#2-training)
   - [3. Evaluation](#3-evaluation)
   - [4. Analysis](#4-analysis)
-- [Citation](#citation)
-- [License](#license)
-
----
 
 ## Overview
 
-Standard practice evaluates semantic-cache re-rankers with **PR-AUC**, which measures only ranking quality and ignores whether scores are usable at a fixed operating threshold. We show this leads to systematically poor deployment choices — **the models with the highest PR-AUC are often the worst in operation.**
+Standard practice evaluates semantic-cache retrievers and re-rankers with **PR-AUC**, a threshold-agnostic metric (agnostic to score magnitude) that ignores whether scores are usable at a fixed operating threshold. We show this leads to systematically poor deployment choices — **the models with the highest PR-AUC are often the worst in operation.**
 
 The paper introduces two cache-aware tools and a decomposition:
 
@@ -39,11 +47,9 @@ The paper introduces two cache-aware tools and a decomposition:
 - **Calibration Retention Rate (CRR)** — how much of a model's offline ranking quality actually survives at deployment.
 - A decomposition of the offline-to-deployed quality gap into a **recoverable calibration component** and an **irreducible structural component** fixed by the dataset's positive rate.
 
-Our experiments show the calibration gap is governed by the **training objective** (e.g. binary cross-entropy vs. multiple-negatives ranking loss) rather than data scale, and that post-hoc calibration only partially closes it. The central takeaway: **model selection for semantic caching is a calibration problem, not a ranking one.**
+Our experiments show the calibration gap is governed by the **training objective** (binary cross-entropy vs. multiple-negatives ranking loss) rather than data scale, and that post-hoc calibration only partially closes it. The central takeaway: **model selection for semantic caching is a calibration problem, not a ranking one.**
 
 This repository lets you reproduce that result end-to-end and apply the same analysis to your own retrievers and re-rankers.
-
----
 
 ## Key Concepts
 
@@ -56,13 +62,11 @@ These definitions make the repository self-contained; see the paper for full tre
 | **Re-ranker** | Cross-encoder or ColBERT model that re-scores the retrieved candidates more precisely. |
 | **Cache Hit Ratio (CHR)** | Fraction of queries for which the cache fires (top score ≥ threshold), regardless of correctness. |
 | **Valid Cache Hit Ratio (VCHR)** | Fraction of queries where the cache fires **and** returns the correct match (= precision × CHR). |
-| **PR-AUC** | Area under the precision–recall curve. Ranking-only; threshold-agnostic. |
+| **PR-AUC** | Area under the precision–recall curve, swept over the decision threshold and reported for both retrievers and re-rankers. It is agnostic to score magnitude, so a high PR-AUC need not translate into good precision at a fixed deployment threshold. |
 | **P-CHR AUC** | Area under the precision-vs-CHR curve — precision across operating points defined by *how much* of the cache is used. The paper's recommended selection metric. |
-| **Calibration Retention Rate (CRR)** | How much offline ranking quality is retained at a deployable fixed threshold. |
+| **Calibration Retention Rate (CRR)** | P-CHR AUC / PR-AUC — how much offline ranking quality is retained at a deployable fixed threshold. |
 | **Calibration gap** | The recoverable part of the offline→deployed quality drop, attributable to mis-calibrated scores. Partially closed by temperature / Platt scaling. |
 | **Structural gap** | The irreducible part, fixed by the dataset's positive rate. |
-
----
 
 ## Repository Structure
 
@@ -73,7 +77,7 @@ These definitions make the repository self-contained; see the paper for full tre
 │   │   ├── analyze_cls.py              # PR-AUC and P-CHR-AUC metric analysis and plots
 │   │   ├── analyze_distribution.py    # Score distribution (KDE) analysis and plots
 │   │   ├── analyze_latency.py         # Retrieval and reranking latency analysis and plots
-│   │   ├── compute_calibration.py     # Temperature and Platt scaling calibration for BCE models
+│   │   ├── compute_calibration.py     # Temperature and Platt scaling calibration
 │   │   └── util.py                     # Shared utilities (library module)
 │   ├── eval/
 │   │   ├── eval_reranker.py            # End-to-end retrieval + re-ranking evaluation
@@ -84,9 +88,9 @@ These definitions make the repository self-contained; see the paper for full tre
 │   │   ├── finetune_crossencoder.py    # Cross-encoder re-ranker fine-tuning script
 │   │   └── util.py                     # Dataset loading and InfoNCE utilities (library module)
 │   ├── sentencepairs/
-│   │   ├── create_sentencepairs_v1.py  # Dataset curation: v1 (~1M train pairs)
-│   │   ├── create_sentencepairs_v2.py  # Dataset curation: v2 (~8M train pairs)
-│   │   └── create_sentencepairs_v3.py  # Dataset curation: v3 (~40M train pairs)
+│   │   ├── create_sentencepairs_v1.py  # Dataset curation: v1 (1M train pairs)
+│   │   ├── create_sentencepairs_v2.py  # Dataset curation: v2 (8M train pairs)
+│   │   └── create_sentencepairs_v3.py  # Dataset curation: v3 (40M train pairs)
 │   └── shell/
 │       ├── run_reranker_evals.sh               # Run all retriever–reranker eval combinations
 │       └── run_reranker_evals_for_retriever.sh # Run all rerankers for one retriever
@@ -95,8 +99,6 @@ These definitions make the repository self-contained; see the paper for full tre
 ├── pyproject.toml
 └── uv.lock
 ```
-
----
 
 ## Installation
 
@@ -140,9 +142,7 @@ huggingface-cli login
 ### Hardware
 
 - **Evaluation & analysis:** a single GPU is recommended; CPU works but is slow. The analysis scripts are CPU-parallel.
-- **Training:** a CUDA GPU is required. The fine-tuning scripts use **FlashAttention-2** and `bfloat16`; ColBERT training supports multi-GPU via `accelerate`.
-
----
+- **Training:** a CUDA GPU is required. All training scripts support single- and multi-GPU execution via `accelerate launch` (run `accelerate config` once to set up), and use **FlashAttention-2** with `bfloat16`.
 
 ## Models and Datasets
 
@@ -162,8 +162,6 @@ All models and datasets introduced in the paper are published under the [`redis`
 | Sentence-pair datasets | [`redis/langcache-sentencepairs-v1`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v1) · [`v2`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v2) · [`v3`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v3) |
 | LLM paraphrase source | [`redis/llm-paraphrases`](https://huggingface.co/datasets/redis/llm-paraphrases) |
 
-> **Activation note.** `*-bce-*` re-rankers are trained with binary cross-entropy and output logits that should be passed through a **sigmoid** (and benefit from calibration). `*-softmnrl-*` re-rankers are trained with a ranking loss; their scores are compared via **softmax** over candidates. ColBERT scores use softmax. The analysis scripts apply the correct activation automatically based on the model/calibration file.
-
 ### Baselines evaluated
 
 - **Retrievers:** `Snowflake/snowflake-arctic-embed-m-v1.5`, `Snowflake/snowflake-arctic-embed-m-v2.0`, `BAAI/bge-base-en-v1.5`, `intfloat/e5-base-v2`, `nomic-ai/nomic-embed-text-v1.5`, `Alibaba-NLP/gte-modernbert-base`
@@ -176,13 +174,11 @@ Three cumulative versions of the sentence-pair dataset are provided, each buildi
 
 | Version | Train | Val | Test | Sources |
 |---------|------:|----:|-----:|---------|
-| v1 | ~1M | ~8.4K | ~62K | APT, PAWS, QQP, SICK, STS-B, MRPC, PARADE, PIT-2015 |
-| v2 | ~8M | ~8.4K | ~74K | v1 + LLM-generated paraphrases |
-| v3 | ~40M | ~10.8K | ~74K | v2 + OpusParcus, TTIC-31190, TaPaCo, Paraphrase Collections, ChatGPT Paraphrases, ParaNMT-5M, Task275-WSC, ParaBank2 |
+| [v1](https://huggingface.co/datasets/redis/langcache-sentencepairs-v1) | 1M | 8.4K | 62K | APT, PAWS, QQP, SICK, STS-B, MRPC, PARADE, PIT-2015 |
+| [v2](https://huggingface.co/datasets/redis/langcache-sentencepairs-v2) | 8M | 8.4K | 74K | v1 + LLM-generated paraphrases |
+| [v3](https://huggingface.co/datasets/redis/langcache-sentencepairs-v3) | 40M | 10.8K | 74K | v2 + OpusParcus, TTIC-31190, TaPaCo, Paraphrase Collections, ChatGPT Paraphrases, ParaNMT-5M, Task275-WSC, ParaBank2 |
 
-The paper uses **v3**. You do **not** need to rebuild the datasets to reproduce results — they are published on the Hub and loaded automatically by the training and evaluation scripts.
-
----
+All three versions are pre-built and published on the Hub (linked above), so you do **not** need to rebuild them to reproduce results — they are loaded automatically by the training and evaluation scripts. The paper uses **v3**.
 
 ## Reproducing the Paper
 
@@ -205,7 +201,7 @@ python src/eval/eval_reranker.py \
   --flush-cache \
   --output results/example.json
 
-# 3. (BCE models) compute calibration parameters
+# 3. Fit post-hoc calibration (temperature / Platt) for the re-ranker
 python src/analysis/compute_calibration.py \
   --model-path redis/langcache-reranker-v2-modernbert-bce-eps0.5 \
   --dataset-version v3 \
@@ -227,16 +223,14 @@ python src/analysis/analyze_cls.py \
 # edit TOP_K inside the script for k=50). Requires Redis running.
 bash src/shell/run_reranker_evals.sh
 
-# Compute calibration for each BCE re-ranker (repeat per model), then run all analyses
-python src/analysis/compute_calibration.py --model-path <bce-model> --dataset-version v3 --output calibration_params.json
+# Compute calibration for each re-ranker (BCE and MNRL; repeat per model), then run all analyses
+python src/analysis/compute_calibration.py --model-path <reranker> --dataset-version v3 --output calibration_params.json
 python src/analysis/analyze_cls.py          --results-dir results/ --plots-dir plots/classification/ --output plots/classification/cls_metrics.json --calibration calibration_params.json
 python src/analysis/analyze_distribution.py --results-dir results/ --plots-dir plots/distribution/   --output plots/distribution/dist_metrics.json   --calibration calibration_params.json
 python src/analysis/analyze_latency.py      --results-dir results/ --plots-dir plots/latency/        --output plots/latency/latency_metrics.json
 ```
 
 > **Cache reuse.** Populating the cache for a retriever is the expensive step. Pass `--flush-cache` on the **first** evaluation for each new retriever, then omit it for subsequent re-rankers that share the same retriever so the cached embeddings are reused. The shell scripts handle this automatically.
-
----
 
 ## Detailed Usage
 
@@ -274,16 +268,14 @@ Most sources download automatically from the Hub. A few must be placed under a `
 
 All other sources (PAWS, MRPC, QQP, STS-B, TaPaCo, Paraphrase Collections, ChatGPT Paraphrases, Task275-WSC, and the LLM paraphrases) are pulled from the Hub automatically.
 
----
-
 ### 2. Training
 
-> Optional — the trained re-rankers are on the Hub. Training requires a CUDA GPU.
+> Optional — the trained re-rankers are on the Hub. Training requires a CUDA GPU and supports multi-GPU via `accelerate`.
 
 #### Cross-Encoder Fine-tuning
 
 ```bash
-python src/reranker/finetune_crossencoder.py \
+accelerate launch src/reranker/finetune_crossencoder.py \
   --pretrained-model-path Alibaba-NLP/gte-reranker-modernbert-base \
   --finetuned-model-path <your-hf-username>/my-reranker \
   --dataset-version v3 \
@@ -322,8 +314,6 @@ The best checkpoint (by validation F1) is pushed to `--finetuned-model-path` at 
 
 #### ColBERT Fine-tuning
 
-Multi-GPU training via `accelerate`:
-
 ```bash
 accelerate launch src/reranker/finetune_colbert.py \
   --pretrained-model-path lightonai/GTE-ModernColBERT-v1 \
@@ -358,8 +348,6 @@ accelerate launch src/reranker/finetune_colbert.py \
 | `--output-dir` | `/opt/dlami/nvme/langcache-colbert-models` | Local checkpoint directory |
 | `--wandb-run-name` | `None` | Optional Weights & Biases run name |
 | `--device` / `--seed` | `cuda` / `42` | Device and random seed |
-
----
 
 ### 3. Evaluation
 
@@ -403,15 +391,13 @@ bash src/shell/run_reranker_evals_for_retriever.sh <retriever> <redis_port> [top
 
 Each result JSON records, per query: the retrieved candidates and scores, the re-ranked candidates and scores, the ground-truth label, and retrieval/reranking/total latencies — everything the analysis scripts need.
 
----
-
 ### 4. Analysis
 
 Once `results/` is populated, the analysis scripts compute the paper's metrics and figures. All of them accept `--workers` (default `-1` = all CPUs).
 
 #### Score Calibration
 
-Fit **temperature** and **Platt** scaling parameters for a BCE-trained re-ranker on the train+val split. The output JSON is consumed by the classification and distribution analyses via `--calibration`.
+Fit **temperature** and **Platt** scaling parameters for a re-ranker on the train+val split. The output JSON is consumed by the classification and distribution analyses via `--calibration`. The paper applies and compares post-hoc calibration on both **BCE-** and **MNRL-trained** re-rankers; ColBERT-family models need no calibration, since their gap is entirely structural.
 
 ```bash
 python src/analysis/compute_calibration.py \
@@ -422,7 +408,7 @@ python src/analysis/compute_calibration.py \
 
 | Argument | Default | Description |
 |----------|---------|-------------|
-| `--model-path` | *(required)* | Hub ID or local path of the BCE re-ranker |
+| `--model-path` | *(required)* | Hub ID or local path of the re-ranker |
 | `--dataset-version` | *(required)* | Version the model was trained on (`v1`/`v2`/`v3`) |
 | `--output` | *(required)* | Calibration JSON to write/merge into |
 | `--batch-size` | `64` | Inference batch size |
@@ -479,28 +465,3 @@ python src/analysis/analyze_latency.py \
 ```
 
 Arguments: `--results-dir`, `--plots-dir`, `--output` (all required), `--workers`. Outputs `latency_breakdown.png`, `latency_per_reranker.png`, `latency_per_retriever.png` and a metrics JSON.
-
----
-
-## Citation
-
-If you use this code, the models, or the datasets, please cite:
-
-```bibtex
-@article{baral2026calibration,
-  title   = {Closing the Calibration Gap in Semantic Caching},
-  author  = {Baral, Aditeya and Ralev, Radoslav and Zhechev, Iliya Sotirov and Rajamohan, Srijith and Agarwal, Jen},
-  year    = {2026},
-  eprint  = {XXXX.XXXXX},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.CL}
-}
-```
-
-<!-- TODO: replace the arXiv eprint ID once available. -->
-
----
-
-## License
-
-Released under the Apache-2.0 License (consistent with the released model cards). <!-- TODO: add a LICENSE file to the repository root. -->
