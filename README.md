@@ -1,6 +1,6 @@
 # Semantic Cache Re-ranking Evaluation
 
-This repository contains the code accompanying our paper. It covers: sentence-pair dataset curation, cross-encoder and ColBERT re-ranker fine-tuning, end-to-end retrieval and re-ranking evaluation against a live semantic cache, and analysis tools for computing and visualising PR-AUC, Precision–Cache Hit Ratio (P-CHR) AUC, score distributions, and latency metrics.
+This repository contains the code accompanying our paper. It covers: sentence-pair dataset curation, cross-encoder re-ranker fine-tuning, end-to-end retrieval and re-ranking evaluation (cross-encoder and ColBERT re-rankers) against a live semantic cache, and analysis tools for computing and visualising PR-AUC, Precision–Cache Hit Ratio (P-CHR) AUC, score distributions, and latency metrics.
 
 To reproduce the results in the paper, follow the steps in order: **Setup → Datasets → Training → Evaluation → Analysis**.
 
@@ -22,7 +22,6 @@ To reproduce the results in the paper, follow the steps in order: **Setup → Da
 │   │   └── retrieve_rerank_evaluator.py  # Evaluator class (library module)
 │   ├── reranker/
 │   │   ├── cache_evaluator.py          # Cache-aware SentenceEvaluator (library module)
-│   │   ├── finetune_colbert.py         # ColBERT fine-tuning script
 │   │   ├── finetune_crossencoder.py    # Cross-encoder fine-tuning script
 │   │   └── util.py                     # Dataset loading and InfoNCE utilities (library module)
 │   ├── sentencepairs/
@@ -173,50 +172,6 @@ python src/reranker/finetune_crossencoder.py \
 | `--seed` | `42` | Random seed |
 
 The best checkpoint is selected by validation F1 score and pushed to the HuggingFace Hub under `--finetuned-model-path` at the end of training.
-
-### ColBERT Fine-tuning
-
-Fine-tune a ColBERT re-ranker using multi-GPU training via `accelerate`:
-
-```bash
-accelerate launch src/reranker/finetune_colbert.py \
-  --pretrained-model-path lightonai/GTE-ModernColBERT-v1 \
-  --finetuned-model-path <output-model-name> \
-  --dataset-version v3 \
-  --batch-size 48 \
-  --learning-rate 2e-4 \
-  --epochs 5 \
-  --output-dir /path/to/checkpoints
-```
-
-**Key arguments:**
-
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--pretrained-model-path` | `lightonai/GTE-ModernColBERT-v1` | Base ColBERT model to fine-tune |
-| `--finetuned-model-path` | `redis/langcache-colbert-v2` | Output model name / HuggingFace Hub ID |
-| `--query-length` | `512` | Maximum query token length |
-| `--document-length` | `512` | Maximum document token length |
-| `--dataset-version` | `v3` | SentencePairs version to train on (`v1`, `v2`, `v3`) |
-| `--train-dataset-subsets` | `["all"]` | Subset names within the dataset version |
-| `--num-negatives` | `1` | Negatives per anchor (InfoNCE) |
-| `--temperature` | `0.02` | InfoNCE temperature |
-| `--batch-size` | `48` | Per-device train and eval batch size |
-| `--learning-rate` | `2e-4` | Peak learning rate |
-| `--epochs` | `5` | Number of training epochs |
-| `--warmup-ratio` | `0.10` | Fraction of steps used for learning rate warmup |
-| `--weight-decay` | `0.001` | AdamW weight decay |
-| `--eval-split` | `val` | Split used for checkpoint selection during training |
-| `--combine-train-and-val` | `False` | Merge train and val splits into the training set |
-| `--eval-steps` | `1000` | Evaluate every N steps |
-| `--save-steps` | `10000` | Save checkpoint every N steps |
-| `--save-total-limit` | `5` | Maximum number of checkpoints to keep |
-| `--output-dir` | — | Directory for checkpoints and logs |
-| `--wandb-run-name` | — | Optional Weights & Biases run name |
-| `--device` | `cuda` | Device to train on |
-| `--seed` | `42` | Random seed |
-
-The best checkpoint is pushed to the HuggingFace Hub under `--finetuned-model-path` at the end of training.
 
 ---
 

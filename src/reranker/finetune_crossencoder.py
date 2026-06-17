@@ -30,11 +30,11 @@ from sentence_transformers.cross_encoder.losses import (
     MSELoss,
 )
 
-from reranker.util import (
+from src.reranker.util import (
     load_langcache_sentencepairs_splits,
     to_infonce,
 )
-from cache_evaluator import CacheEvaluator
+from src.reranker.cache_evaluator import CacheEvaluator
 
 
 if __name__ == "__main__":

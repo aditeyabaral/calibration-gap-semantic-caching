@@ -1,7 +1,14 @@
 [project]
 name = "calibration-gap-semantic-caching"
 version = "0.1.0"
-description = "Add your description here"
+description = "Code accompanying the paper 'Closing the Calibration Gap in Semantic Caching': cache-aware evaluation of semantic-cache re-rankers, including the Redis LangCache Embed and Re-ranker models, using Precision-Cache Hit Ratio (P-CHR) AUC and Calibration Retention Rate, plus sentence-pair dataset curation and analysis of score calibration, score distributions, and latency."
+authors = [
+    { name = "Aditeya Baral", email = "aditeyabaral@nyu.edu" },
+    { name = "Radoslav Ralev", email = "radoslav.ralev@redis.com" },
+    { name = "Iliya Sotirov Zhechev", email = "iliya.zhechev@redis.com" },
+    { name = "Srijith Rajamohan", email = "srijith.rajamohan@redis.com" },
+    { name = "Jen Agarwal", email = "jen.agarwal@redis.com" },
+]
 readme = "README.md"
 requires-python = ">=3.12"
 
