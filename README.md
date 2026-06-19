@@ -152,10 +152,10 @@ All models and datasets introduced in the paper are published under the [`redis`
 | Retriever (bi-encoder) | [`redis/langcache-embed-v1`](https://huggingface.co/redis/langcache-embed-v1) |
 | Retriever (bi-encoder) | [`redis/langcache-embed-v2`](https://huggingface.co/redis/langcache-embed-v2) |
 | Retriever (bi-encoder) | [`redis/langcache-embed-v3-small`](https://huggingface.co/redis/langcache-embed-v3-small) |
-| Cross-encoder re-ranker | [`redis/langcache-reranker-v1`](https://huggingface.co/redis/langcache-reranker-v1) |
-| Cross-encoder re-ranker | [`redis/langcache-reranker-v1-softmnrl-triplet`](https://huggingface.co/redis/langcache-reranker-v1-softmnrl-triplet) |
-| Cross-encoder re-ranker (BCE) | [`redis/langcache-reranker-v2-modernbert-bce-eps0.5`](https://huggingface.co/redis/langcache-reranker-v2-modernbert-bce-eps0.5) |
-| Cross-encoder re-ranker (MNRL) | [`redis/langcache-reranker-v2-softmnrl-triplet`](https://huggingface.co/redis/langcache-reranker-v2-softmnrl-triplet) |
+| Cross-encoder re-ranker | [`redis/langcache-reranker-v1-bce`](https://huggingface.co/redis/langcache-reranker-v1-bce) |
+| Cross-encoder re-ranker | [`redis/langcache-reranker-v1-mnrl`](https://huggingface.co/redis/langcache-reranker-v1-mnrl) |
+| Cross-encoder re-ranker (BCE) | [`redis/langcache-reranker-v2-bce`](https://huggingface.co/redis/langcache-reranker-v2-bce) |
+| Cross-encoder re-ranker (MNRL) | [`redis/langcache-reranker-v2-mnrl`](https://huggingface.co/redis/langcache-reranker-v2-mnrl) |
 | Sentence-pair datasets | [`redis/langcache-sentencepairs-v1`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v1) · [`v2`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v2) · [`v3`](https://huggingface.co/datasets/redis/langcache-sentencepairs-v3) |
 | LLM paraphrase source | [`redis/llm-paraphrases`](https://huggingface.co/datasets/redis/llm-paraphrases) |
 
@@ -191,7 +191,7 @@ huggingface-cli login
 # 2. Evaluate one retriever + re-ranker pair at k=50 (the paper's setting)
 python src/eval/eval_reranker.py \
   --biencoder-model-path redis/langcache-embed-v3-small \
-  --reranker-model-path redis/langcache-reranker-v2-modernbert-bce-eps0.5 \
+  --reranker-model-path redis/langcache-reranker-v2-bce \
   --reranker-type crossencoder \
   --dataset-version v3 \
   --top-k 50 \
@@ -200,7 +200,7 @@ python src/eval/eval_reranker.py \
 
 # 3. Fit post-hoc calibration (temperature / Platt) for the re-ranker
 python src/analysis/compute_calibration.py \
-  --model-path redis/langcache-reranker-v2-modernbert-bce-eps0.5 \
+  --model-path redis/langcache-reranker-v2-bce \
   --dataset-version v3 \
   --output calibration_params.json
 
@@ -287,7 +287,7 @@ accelerate launch src/reranker/finetune_crossencoder.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--pretrained-model-path` | `Alibaba-NLP/gte-reranker-modernbert-base` | Base cross-encoder to fine-tune |
-| `--finetuned-model-path` | `redis/langcache-reranker-v2` | Output model name / Hub ID (also the push target — override with your own namespace) |
+| `--finetuned-model-path` | `redis/langcache-reranker-v2-bce` | Output model name / Hub ID (also the push target — override with your own namespace) |
 | `--dataset-version` | `v3` | SentencePairs version (`v1`, `v2`, `v3`) |
 | `--train-dataset-subsets` | `["all"]` | Subset names within the dataset version |
 | `--loss-function` | *(required)* | `bce`, `mnrl-sampled`, `mnrl-positive`, or `mse` |
@@ -353,7 +353,7 @@ accelerate launch src/reranker/finetune_colbert.py \
 ```bash
 python src/eval/eval_reranker.py \
   --biencoder-model-path redis/langcache-embed-v3-small \
-  --reranker-model-path redis/langcache-reranker-v2-modernbert-bce-eps0.5 \
+  --reranker-model-path redis/langcache-reranker-v2-bce \
   --reranker-type crossencoder \
   --dataset-version v3 \
   --top-k 50 \
@@ -398,7 +398,7 @@ Fit **temperature** and **Platt** scaling parameters for a re-ranker on the trai
 
 ```bash
 python src/analysis/compute_calibration.py \
-  --model-path redis/langcache-reranker-v2-modernbert-bce-eps0.5 \
+  --model-path redis/langcache-reranker-v2-bce \
   --dataset-version v3 \
   --output calibration_params.json
 ```

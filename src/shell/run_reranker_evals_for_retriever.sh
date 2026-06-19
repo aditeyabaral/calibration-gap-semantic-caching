@@ -19,11 +19,11 @@ REDIS_HOST="localhost"
 # Cross-encoder rerankers
 CROSSENCODER_RERANKERS=(
     # v1 rerankers
-    "redis/langcache-reranker-v1"
-    "redis/langcache-reranker-v1-softmnrl-triplet"
+    "redis/langcache-reranker-v1-bce"
+    "redis/langcache-reranker-v1-mnrl"
     # v2 rerankers
-    "redis/langcache-reranker-v2-modernbert-bce-eps0.5"
-    "redis/langcache-reranker-v2-softmnrl-triplet"
+    "redis/langcache-reranker-v2-bce"
+    "redis/langcache-reranker-v2-mnrl"
     # MS MARCO reranker
     "cross-encoder/ms-marco-MiniLM-L12-v2"
     # baseline reranker

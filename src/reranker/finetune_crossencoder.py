@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--finetuned-model-path",
         type=str,
-        default="redis/langcache-reranker-v2",
+        default="redis/langcache-reranker-v2-bce",
         help="Path to the finetuned crossencoder model.",
     )
     parser.add_argument(

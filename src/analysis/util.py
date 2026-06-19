@@ -56,8 +56,8 @@ def get_calibration_params(
 ) -> Optional[dict]:
     """Look up calibration params for a model by its sanitized name.
 
-    Sanitized names use '--' as separator (e.g. 'redis--langcache-reranker-v1'),
-    while calibration keys use only the final path component ('langcache-reranker-v1').
+    Sanitized names use '--' as separator (e.g. 'redis--langcache-reranker-v1-bce'),
+    while calibration keys use only the final path component ('langcache-reranker-v1-bce').
 
     Handles both flat {param: value} and nested {version: {param: value}} structures
     produced by compute_calibration.py. For the nested form, the latest version is used.
