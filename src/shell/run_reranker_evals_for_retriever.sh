@@ -3,7 +3,7 @@
 # Usage: run_reranker_evals_for_retriever.sh <retriever> <redis_port> [top_k]
 RETRIEVER="$1"
 REDIS_PORT="$2"
-TOP_K="${3:-5}"
+TOP_K="${3:-50}"
 
 if [ -z "$RETRIEVER" ] || [ -z "$REDIS_PORT" ]; then
     echo "Usage: $0 <retriever> <redis_port> [top_k]"

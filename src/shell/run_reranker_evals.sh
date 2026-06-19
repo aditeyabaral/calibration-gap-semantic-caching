@@ -3,7 +3,7 @@
 # Configuration
 SEED=42
 DEVICE="cuda"
-TOP_K=5
+TOP_K=50
 DATASET_VERSION="v3"
 REDIS_HOST="localhost"
 REDIS_PORT=6379
@@ -15,7 +15,6 @@ RETRIEVERS=(
     "redis/langcache-embed-v2"
     "redis/langcache-embed-v3-small"
     # snowflake retrievers
-    "Snowflake/snowflake-arctic-embed-m-v1.5"
     "Snowflake/snowflake-arctic-embed-m-v2.0"
     # BAAI retrievers
     "BAAI/bge-base-en-v1.5"
@@ -23,6 +22,8 @@ RETRIEVERS=(
     "intfloat/e5-base-v2"
     # nomic retrievers
     "nomic-ai/nomic-embed-text-v1.5"
+    # jina retrievers
+    "jinaai/jina-embeddings-v2-base-en"
     # baseline retriever
     "Alibaba-NLP/gte-modernbert-base"
 )

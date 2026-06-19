@@ -1,13 +1,21 @@
 # Closing the Calibration Gap in Semantic Caching
 
-Official code for the paper 📄 **"Closing the Calibration Gap in Semantic Caching."** [[arXiv]](https://arxiv.org/abs/XXXX.XXXXX)
+Official code for the paper 📄 **"Closing the Calibration Gap in Semantic Caching."** [[arXiv]](https://arxiv.org/abs/2606.19719)
 
-🤗 **Models and datasets:** [`redis` on Hugging Face](https://huggingface.co/redis)
+🤗 **Models and datasets:** [`redis` on HuggingFace](https://huggingface.co/redis)
 
 If you use this code, the models, or the datasets, please cite:
 
 ```bibtex
-<bibtex>
+@misc{baral2026closingcalibrationgapsemantic,
+      title={Closing the Calibration Gap in Semantic Caching}, 
+      author={Aditeya Baral and Radoslav Ralev and Iliya Sotirov Zhechev and Srijith Rajamohan and Jen Agarwal},
+      year={2026},
+      eprint={2606.19719},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2606.19719}, 
+}
 ```
 
 Semantic caching cuts LLM inference costs by serving a cached response when a new query is *semantically* similar to a previously seen one. Whether a cache should fire is decided by a **score threshold**, yet semantic-cache retrievers and re-rankers are almost always selected by **PR-AUC** — a threshold-agnostic metric that says nothing about whether those scores are *usable at a fixed threshold*. This repository contains everything needed to reproduce our study of that mismatch: dataset curation, re-ranker fine-tuning, end-to-end retrieval + re-ranking evaluation against a live [Redis](https://redis.io/) semantic cache, and the cache-aware analysis that quantifies the **calibration gap**.
